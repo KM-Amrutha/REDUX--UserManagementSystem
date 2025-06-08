@@ -56,8 +56,8 @@
 }
 
 .error {
-  color: red;
-  font-size: 0.9rem;
+  color: rgb(33, 32, 32);
+  font-size: 1.2rem;
   margin-top: 0.5rem;
   text-align: center;
 }

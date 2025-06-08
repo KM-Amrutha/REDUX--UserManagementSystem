@@ -6,10 +6,13 @@ import {
   TextField,
   Button,
   useMediaQuery,
+  FormControl,
+  FormHelperText,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
-import { adminAxiosInstance } from "../redux/axiosInterceptor";
+import { axiosInstance } from "../redux/axiosInterceptor";
+import { toast } from "react-hot-toast";
 
 export default function AddUser({ SetaddUser, addUserTolist }) {
   const theme = useTheme();
@@ -46,14 +49,36 @@ export default function AddUser({ SetaddUser, addUserTolist }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) setData({ ...data, profileImage: file });
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSizeMB = 1;
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        profileImage: "Only JPG, PNG, or WEBP images allowed",
+      }));
+      return;
+    }
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        profileImage: `Image must be under ${maxSizeMB}MB`,
+      }));
+      return;
+    }
+
+    setData({ ...data, profileImage: file });
+    setErrors((prev) => ({ ...prev, profileImage: "" }));
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
 
     try {
-      const res = await adminAxiosInstance.get("/admin/authenticated");
+      const res = await axiosInstance.get("/admin/authenticated");
       const userId = res.data?.data?._id;
       const formData = new FormData();
 
@@ -63,15 +88,18 @@ export default function AddUser({ SetaddUser, addUserTolist }) {
       formData.append("profileImage", data.profileImage);
       formData.append("userId", userId);
 
-      const uploadRes = await adminAxiosInstance.post("/admin/add-user", formData, {
+      const uploadRes = await axiosInstance.post("/admin/add-user", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       addUserTolist(uploadRes.data.user);
       SetaddUser(false);
     } catch (err) {
-      console.error("Upload failed", err);
-    }
+  const message =
+    err?.response?.data?.message || "Something went wrong. Please try again.";
+  console.error("Add User Error:", message);
+  toast.error(message);
+}
   };
 
   return (
@@ -79,61 +107,74 @@ export default function AddUser({ SetaddUser, addUserTolist }) {
       fullScreen={fullScreen}
       open={true}
       onClose={handleClose}
-     PaperProps={{
-  sx: {
-    background: "linear-gradient(180deg, rgb(235, 131, 4) 0%, rgb(204, 0, 146) 100%)",
-    color: "#fff",
-  },
-}}
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          background:
+            "linear-gradient(180deg, rgb(235, 131, 4) 0%, rgb(204, 0, 146) 100%)",
+          color: "#fff",
+        },
+      }}
     >
       <DialogTitle>Add User Details</DialogTitle>
 
       <DialogContent>
-        <TextField
-          label="Name"
-          name="name"
-          fullWidth
-          margin="normal"
-          value={data.name}
-          onChange={handleChange}
-          error={!!errors.name}
-          helperText={errors.name}
-          sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
-        />
-        <TextField
-          label="Email"
-          name="email"
-          type="email"
-          fullWidth
-          margin="normal"
-          value={data.email}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-          sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
-        />
-        <TextField
-          label="Password"
-          name="password"
-          type="password"
-          fullWidth
-          margin="normal"
-          value={data.password}
-          onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
-        />
-        <input
-          type="file"
-          name="profileImage"
-          onChange={handleFileChange}
-          accept="image/*"
-          style={{ marginTop: "16px", color: "#fff" }}
-        />
-        {errors.profileImage && (
-          <p style={{ color: "red", marginTop: "4px" }}>{errors.profileImage}</p>
-        )}
+        <FormControl fullWidth margin="normal">
+          <TextField
+            label="Name"
+            name="name"
+            value={data.name}
+            onChange={handleChange}
+            sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
+            error={!!errors.name}
+          />
+          <FormHelperText sx={{ color: "black" }}>
+            {errors.name || " "}
+          </FormHelperText>
+        </FormControl>
+
+        <FormControl fullWidth margin="normal">
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={data.email}
+            onChange={handleChange}
+            sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
+            error={!!errors.email}
+          />
+          <FormHelperText sx={{ color: "black" }}>
+            {errors.email || " "}
+          </FormHelperText>
+        </FormControl>
+
+        <FormControl fullWidth margin="normal">
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={data.password}
+            onChange={handleChange}
+            sx={{ input: { color: "#fff" }, label: { color: "#ccc" } }}
+            error={!!errors.password}
+          />
+          <FormHelperText sx={{ color: "black" }}>
+            {errors.password || " "}
+          </FormHelperText>
+        </FormControl>
+
+        <FormControl fullWidth margin="normal">
+          <input
+            type="file"
+            name="profileImage"
+            onChange={handleFileChange}
+            accept="image/*"
+            style={{ color: "#fff" }}
+          />
+          <FormHelperText sx={{ color: "black" }}>
+            {errors.profileImage || " "}
+          </FormHelperText>
+        </FormControl>
       </DialogContent>
 
       <DialogActions>
@@ -145,7 +186,11 @@ export default function AddUser({ SetaddUser, addUserTolist }) {
         </Button>
         <Button
           onClick={handleSubmit}
-          sx={{ bgcolor: "#1976d2", color: "#fff", ":hover": { bgcolor: "#115293" } }}
+          sx={{
+            bgcolor: "#1976d2",
+            color: "#fff",
+            ":hover": { bgcolor: "#115293" },
+          }}
         >
           Submit
         </Button>

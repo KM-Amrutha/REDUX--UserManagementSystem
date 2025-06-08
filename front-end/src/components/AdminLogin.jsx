@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminAxiosInstance } from "../redux/axiosInterceptor";
+import { axiosInstance } from "../redux/axiosInterceptor";
 import Cookies from "js-cookie";
 
 const AdminLogin = () => {
@@ -39,10 +39,10 @@ const AdminLogin = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await adminAxiosInstance.post("/admin/login", loginData);
+      const response = await axiosInstance.post("/admin/login", loginData);
 
       if (response.status === 200 && response.data.token) {
-        Cookies.set("adminToken", response.data.token,{expires:30});
+        Cookies.set("authToken", response.data.token,{expires:30});
         navigate("/admin-home");
       } else {
         setError({ general: "Login failed. Please check your credentials." });
@@ -94,8 +94,8 @@ const AdminLogin = () => {
       padding: "0.5rem",
       border: "1px solid #4a5568", // gray-700
       borderRadius: "0.5rem",
-      backgroundColor: "#2d3748", // gray-800
-      color: "#fff",
+      backgroundColor: "#fff", // gray-800
+      color: "#000",
       outline: "none",
       marginBottom: "0.25rem",
       fontSize: "1rem",
@@ -105,8 +105,8 @@ const AdminLogin = () => {
       borderColor: "#4299e1", // blue-500
     },
     errorText: {
-      color: "#f56565", // red-500
-      fontSize: "0.875rem",
+      color: "#000", // red-500
+      fontSize: "1rem",
       marginBottom: "0.75rem",
     },
     button: {

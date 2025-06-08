@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminAxiosInstance } from "../redux/axiosInterceptor";
+import { axiosInstance } from "../redux/axiosInterceptor";
 import Cookies from "js-cookie";
 import ModalAddUser from "./AddUser";
 import Modal from "./Modal";
+import {toast} from 'react-hot-toast'
 
 
 const styles = {
@@ -138,13 +139,31 @@ const styles = {
   },
 };
 
+
 const AdminHome = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [edituser, setEditUser] = useState(false);
   const [adduser, setadduser] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+const [confirmOpen, setConfirmOpen] = useState(false);
 
   const navigate = useNavigate();
+
+  const [currentPage, setCurrentPage] = useState(1);
+const usersPerPage = 5;
+const filteredUsers = users.filter((user) => {
+  return (
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+});
+
+const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+const startIndex = (currentPage - 1) * usersPerPage;
+const endIndex = startIndex + usersPerPage;
+const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
 
   const getEditedDatas = (editedDatas, id) => {
     const newData = [...users].map((val) =>
@@ -160,45 +179,48 @@ const AdminHome = () => {
   useEffect(() => {
     const fetchdatas = async () => {
       try {
-        const response = await adminAxiosInstance.get("/admin/users");
+        const response = await axiosInstance.get("/admin/users");
         
         if (response.data && Array.isArray(response.data.users)) {
           setUsers(response.data.users);
         } else {
-          console.error("Unexpected response format:", response.data);
+          toast.error("Unexpected response format:", response.data);
         }
       } catch (error) {
-        console.error("Error fetching data:", error.response?.data || error.message);
+        toast.error("Error fetching data:", error.response?.data || error.message);
       }
     };
     fetchdatas();
   }, []);
 
-  const filteredUsers = users.filter((user) => {
-    
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+ 
 
   const HandleEditClick = (usr) => {
     setEditUser(usr);
   };
 
- const handleDeleteClick = async (userid) => {
-  try {
-    await adminAxiosInstance.delete(`/admin/user/${userid}`);
-    setUsers((prevUsers) => prevUsers.filter((user) => user._id !== userid));
-  } catch (error) {
-    console.log("error deleting", error);
-  }
+const handleDeleteClick = (userid) => {
+  setDeleteId(userid);
+  setConfirmOpen(true);
 };
+
+const handleConfirmDelete = async () => {
+  setConfirmOpen(false);
+  try {
+    await axiosInstance.delete(`/admin/user/${deleteId}`);
+    setUsers((prev) => prev.filter((u) => u._id !== deleteId));
+    toast.success("User deleted successfully");
+  } catch (err) {
+    toast.error("Error deleting user");
+  }
+  setDeleteId(null);
+};
+
 
 
   const handleLogout = () => {
     navigate("/admin-login");
-    Cookies.remove("adminToken");
+    Cookies.remove("authToken");
   };
 
   const handleadduser = () => {
@@ -236,7 +258,7 @@ const AdminHome = () => {
         <header style={styles.header}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Dashboard</h1>
           <div style={styles.userInfo}>
-            <span>Admin</span>
+            
           </div>
         </header>
 
@@ -264,9 +286,9 @@ const AdminHome = () => {
               </thead>
               <tbody>
                 {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user, idx) => (
+                  currentUsers.map((user, idx) => (
                     <tr key={user._id}>
-                      <td style={styles.td}>{idx + 1}</td>
+                      <td style={styles.td}>{startIndex + idx + 1}</td>
                       <td style={styles.td}>
                         <img
                           src={user.profileImage}
@@ -300,7 +322,65 @@ const AdminHome = () => {
                   </tr>
                 )}
               </tbody>
+
             </table>
+
+    <div
+  style={{
+    marginTop: "1rem",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "8px",
+  }}
+>
+  <button
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    disabled={currentPage === 1}
+    style={{
+      width: "70px",
+      height: "30px",
+      fontSize: "12px",
+      backgroundColor: currentPage === 1 ? "#a0aec0" : "#3182ce",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      cursor: currentPage === 1 ? "not-allowed" : "pointer",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
+    previous
+  </button>
+
+  <span style={{ fontSize: "14px", color: "#2d3748", minWidth: "40px", textAlign: "center" }}>
+    {currentPage} / {totalPages}
+  </span>
+
+  <button
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    disabled={currentPage === totalPages}
+    style={{
+      width: "50px",
+      height: "30px",
+      fontSize: "12px",
+      backgroundColor: currentPage === totalPages ? "#a0aec0" : "#3182ce",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
+    next
+  </button>
+</div>
+
+
+
           </div>
         </section>
 
@@ -315,6 +395,62 @@ const AdminHome = () => {
           <ModalAddUser SetaddUser={setadduser} addUserTolist={addUserTolist} />
         )}
       </main>
+      {confirmOpen && (
+  <div style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000
+  }}>
+    <div style={{
+      background: "linear-gradient(180deg, rgb(235, 131, 4) 0%, rgb(204, 0, 146) 100%)",
+      color: "#fff",
+      padding: "2rem",
+      borderRadius: "12px",
+      textAlign: "center",
+      width: "300px",
+      boxShadow: "0 10px 20px rgba(0,0,0,0.3)",
+    }}>
+      <h3 style={{ marginBottom: "1rem" }}>Confirm Delete</h3>
+      <p style={{ marginBottom: "1.5rem" }}>Are you sure you want to delete this user?</p>
+      <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
+        <button
+          onClick={() => setConfirmOpen(false)}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#ccc",
+            border: "none",
+            borderRadius: "5px",
+            color: "#333",
+            cursor: "pointer"
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirmDelete}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#f56565",
+            border: "none",
+            borderRadius: "5px",
+            color: "white",
+            cursor: "pointer"
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

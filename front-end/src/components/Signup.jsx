@@ -2,6 +2,7 @@ import { useState } from "react";
 import { axiosInstance } from "../redux/axiosInterceptor";
 import { useNavigate } from "react-router-dom";
 import "./Signup.css";
+import {toast} from 'react-hot-toast'
 
 const Signup = () => {
   const [signupData, setSignupData] = useState({
@@ -20,16 +21,33 @@ const Signup = () => {
     setError((prev) => ({ ...prev, [field]: "" }));
   };
 
+  
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSignupData((prev) => ({
-        ...prev,
-        profileImage: file,
-        profileImagePreview: URL.createObjectURL(file),
-      }));
-    }
-  };
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const maxSizeMB = 2;
+
+  if (!allowedTypes.includes(file.type)) {
+    setError((prev) => ({ ...prev, profileImage: "Only JPG, PNG, or WEBP images are allowed" }));
+    return;
+  }
+
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    setError((prev) => ({ ...prev, profileImage: `Image must be less than ${maxSizeMB}MB` }));
+    return;
+  }
+
+  setSignupData((prev) => ({
+    ...prev,
+    profileImage: file,
+    profileImagePreview: URL.createObjectURL(file),
+  }));
+
+  setError((prev) => ({ ...prev, profileImage: "" }));
+};
+
 
   const validate = () => {
     const errors = {};
@@ -53,15 +71,20 @@ const Signup = () => {
     e.preventDefault();
     if (!validate()) return;
 
+    if (!signupData.profileImage) {
+    setError((prev) => ({ ...prev, profileImage: "Please select a profile image" }));
+    toast.error("Profile image is required");
+    return;
+  }
+
     try {
       const { name, email, password } = signupData;
+
      
 
       // 1. Signup API call
       const res = await axiosInstance.post("/user/signup", { name, email, password });
-      console.log("Signup response:", res.data);
-
-      // ✅ Extract user ID and token directly from response
+     
       const { _id, token } = res.data;
 
       if (_id && token) {
@@ -82,21 +105,20 @@ const Signup = () => {
 
           console.log("Image upload success:", imageUploadRes.data)
         } catch (imgErr) {
-          console.error("Image upload failed:", imgErr.response?.data || imgErr);
-          alert("Image upload failed");
-          return;
-        }
+                const message = imgErr?.response?.data?.message || "Image upload failed";
+                  setError((prev) => ({ ...prev, profileImage: message }));
+                  toast.error("Please select a profile image");
+                    return;
 
-        // 4. Navigate to login
-        console.log("Navigating to login...");
+        }
         navigate("/login");
       } else {
-        console.warn("Signup response missing _id or token");
-        alert("Signup failed: Invalid response");
+        toast.warn("Signup response missing _id or token");
+        
       }
     } catch (error) {
-      console.error("Signup Error:", error.response?.data || error);
-      alert("Signup failed. Try again.");
+      const message = error?.response?.data?.message || "Signup failed. Try again.";
+       toast.error(message)
     }
   };
 
@@ -117,14 +139,16 @@ const Signup = () => {
           </div>
         ))}
 
-        <div className="form-group">
-          <label>Profile Image</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
-          {signupData.profileImagePreview && (
-            <img src={signupData.profileImagePreview} alt="preview" className="preview-img" />
-          )}
-        </div>
+       <div className="form-group">
+  <label>Profile Image</label>
+  <input type="file" accept="image/*" onChange={handleFileChange} />
+  {signupData.profileImagePreview && (
+    <img src={signupData.profileImagePreview} alt="preview" className="preview-img" />
+  )}
+  {error.profileImage && <p className="error-text">{error.profileImage}</p>}
+</div>
 
+       
         <button type="submit">Signup</button>
         <p className="redirect-text">
           Already registered? <a href="/login">Login</a>

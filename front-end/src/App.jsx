@@ -8,15 +8,16 @@ import Home from './components/Home';
 import AdminLogin from './components/AdminLogin';
 import AdminHome from './components/AdminHome';
 import AddUser from './components/AddUser';
+import {Toaster} from 'react-hot-toast'
 
 import { useDispatch } from 'react-redux';
 import Cookies from 'js-cookie';
-import { axiosInstance, adminAxiosInstance } from './redux/axiosInterceptor';
+import { axiosInstance } from './redux/axiosInterceptor';
 import { setUser } from './redux/AuthSlice';
 
 function ProtectedRoute({ ifLogged, notLogged }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const token = Cookies.get('userToken');
+  const token = Cookies.get('authToken');
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -29,7 +30,7 @@ function ProtectedRoute({ ifLogged, notLogged }) {
             setIsAuthenticated(data.status);
           } else {
             setIsAuthenticated(false);
-            Cookies.remove('userToken');
+            Cookies.remove('authToken');
           }
         } catch (error) {
           console.log(error.message);
@@ -50,13 +51,13 @@ function ProtectedRoute({ ifLogged, notLogged }) {
 
 function AdminProtectedRoute({ ifAdminLogged, notAdminLogged }) {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(null);
-  const adminToken = Cookies.get('adminToken');
+  const token = Cookies.get('authToken');
 
   useEffect(() => {
     const checkAdminAuthentication = async () => {
-      if (adminToken) {
+      if (token) {
         try {
-          const { data } = await adminAxiosInstance.get('/admin/authenticated');
+          const { data } = await axiosInstance.get('/admin/authenticated');
           setIsAdminAuthenticated(data.status);
         } catch (error) {
           console.log(error.message);
@@ -68,7 +69,7 @@ function AdminProtectedRoute({ ifAdminLogged, notAdminLogged }) {
     };
 
     checkAdminAuthentication();
-  }, [adminToken]);
+  }, [token]);
 
   if (isAdminAuthenticated === null) return <div>Loading...</div>;
 
@@ -78,6 +79,7 @@ function AdminProtectedRoute({ ifAdminLogged, notAdminLogged }) {
 function App() {
   return (
     <Router>
+       <Toaster position="top-center" />
       <Routes>
         {/* User Routes */}
         <Route path="/" element={

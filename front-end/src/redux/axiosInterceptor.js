@@ -13,7 +13,7 @@ export const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('userToken');
+    const token = Cookies.get('authToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -28,24 +28,6 @@ axiosInstance.interceptors.request.use(
 
 
 
-export const adminAxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
-// Add admin token to request headers
-adminAxiosInstance.interceptors.request.use(
-  (config) => {
-    const adminToken = Cookies.get('adminToken');
-    if (adminToken) {
-      config.headers['Authorization'] = `Bearer ${adminToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    console.error('Admin Request Error:', error);
-    return Promise.reject(error);
-  }
-);
+
+

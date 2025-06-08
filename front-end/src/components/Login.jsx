@@ -28,7 +28,7 @@ function Login() {
       const response = await axiosInstance.post('/user/login', formData); 
       const { token, user } = response.data;
 
-      Cookies.set('userToken', token);
+      Cookies.set('authToken', token);
       dispatch(setUser(user)); 
       navigate('/home');
     } catch (err) {

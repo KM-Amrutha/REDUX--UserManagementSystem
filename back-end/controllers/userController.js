@@ -6,16 +6,17 @@ import multer from 'multer'
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT, {
+const generateToken = (id,role) => {
+  return jwt.sign({ id ,role }, process.env.JWT, {
     expiresIn: '30d',
   });
 };
 
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
+   
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password  ) {
     return res.status(400).json({ message: 'Please fill all fields' });
   }
 
@@ -39,7 +40,7 @@ export const registerUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id),
+        token: generateToken(user._id,'user'),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -59,7 +60,7 @@ export const loginUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id),
+        token: generateToken(user._id,'user'),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -97,7 +98,15 @@ export const  isAuthenticated = async (req, res) => {
 export const uploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No image uploaded" });
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+if (!allowedTypes.includes(req.file.mimetype)) {
+  return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
+}
+
+const MAX_SIZE = 2 * 1024 * 1024;
+if (req.file.size > MAX_SIZE) {
+  return res.status(400).json({ message: "File size exceeds 2MB limit." });
+}
     }
     const imageUrl = await uploadImage(req.file.buffer);
     const { userId } = req.body;
@@ -121,3 +130,38 @@ export const uploadProfileImage = async (req, res) => {
 };
 
 
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.userId; // comes from authenticateJWT
+    const { name, email } = req.body;
+
+    let profileImage;
+
+   if (req.file) {
+  
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(req.file.mimetype)) {
+    return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
+  }
+
+
+  const MAX_SIZE = 1 * 1024 * 1024;
+  if (req.file.size > MAX_SIZE) {
+    return res.status(400).json({ message: "File size exceeds 2MB limit." });
+  }
+
+  profileImage = await uploadImage(req.file.buffer);
+}
+
+
+    const updateData = { name, email };
+    if (profileImage) updateData.profileImage = profileImage;
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+    res.status(200).json({ message: "Profile updated", user: updatedUser });
+  } catch (error) {
+    console.error("User Profile Update Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

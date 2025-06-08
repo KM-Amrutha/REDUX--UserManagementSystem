@@ -80,6 +80,17 @@ export const addUser = async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!req.file) return res.status(400).json({ message: 'Image is required' });
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+if (!allowedTypes.includes(req.file.mimetype)) {
+  return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
+}
+
+if (req.file.size > MAX_SIZE) {
+  return res.status(400).json({ message: "File size exceeds 2MB limit." });
+}
+
 
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(409).json({ message: 'Email already exists' });
@@ -109,6 +120,17 @@ export const editUser = async (req, res) => {
     let profileImage;
 
     if (req.file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+if (!allowedTypes.includes(req.file.mimetype)) {
+  return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
+}
+
+if (req.file.size > MAX_SIZE) {
+  return res.status(400).json({ message: "File size exceeds 2MB limit." });
+}
+
       profileImage = await uploadImage(req.file.buffer);
     }
     const updateData = { name, email };
@@ -129,6 +151,16 @@ export const editUser = async (req, res) => {
 export const imageUpload = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+if (!allowedTypes.includes(req.file.mimetype)) {
+  return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
+}
+
+if (req.file.size > MAX_SIZE) {
+  return res.status(400).json({ message: "File size exceeds 2MB limit." });
+}
 
     const imageUrl = await uploadImage(req.file.buffer);
     const user = await User.findById(req.body.userId);

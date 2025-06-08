@@ -1,14 +1,17 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  useMediaQuery,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useState, useEffect } from "react";
-import { adminAxiosInstance } from "../redux/axiosInterceptor";
+import { axiosInstance } from "../redux/axiosInterceptor";
 import Cookies from "js-cookie";
+import { toast } from "react-hot-toast";
 
 export default function Modal({ edituser, setEditUser, editeduser }) {
   const theme = useTheme();
@@ -21,6 +24,9 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
     imagePreview: null,
   });
 
+  const [fileError, setFileError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+
   useEffect(() => {
     if (edituser) {
       setData({
@@ -29,32 +35,67 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
         profileImage: null,
         imagePreview: edituser.profileImage || null,
       });
+      setFieldErrors({});
+      setFileError("");
     }
   }, [edituser]);
 
   const handleClose = () => setEditUser("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setData((prev) => ({ ...prev, [name]: value }));
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+
+  setData((prev) => ({ ...prev, [name]: value }));
+};
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setData((prev) => ({
-          ...prev,
-          profileImage: file,
-          imagePreview: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSizeMB = 2;
+
+    if (!allowedTypes.includes(file.type)) {
+      setFileError("Only JPG, PNG, or WEBP images allowed");
+      return;
     }
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      setFileError(`Image must be under ${maxSizeMB}MB`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setData((prev) => ({
+        ...prev,
+        profileImage: file,
+        imagePreview: reader.result,
+      }));
+      setFileError("");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!data.name.trim()) newErrors.name = "Name is required";
+    if (!data.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+      newErrors.email = "Invalid email format";
+
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0 && !fileError;
   };
 
   const handleOk = async () => {
+    if (!validate()) {
+      toast.error("Please fill all the fileds correctly");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("_id", edituser._id);
@@ -64,12 +105,12 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
         formData.append("profileImage", data.profileImage);
       }
 
-      const response = await adminAxiosInstance.put(
+      const response = await axiosInstance.put(
         `/admin/edit-user/${edituser._id}`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${Cookies.get("adminToken")}`,
+            Authorization: `Bearer ${Cookies.get("authToken")}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -86,9 +127,11 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
         edituser._id
       );
 
+      toast.success("User updated successfully");
       handleClose();
     } catch (error) {
-      console.error("Error updating user:", error);
+      toast.error("Error updating user");
+      console.error(error);
     }
   };
 
@@ -118,55 +161,28 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
           value={data.name}
           onChange={handleChange}
           placeholder="Name"
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginBottom: "16px",
-            color: "#fff",
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
-            borderColor: "#fff",
-            borderWidth: "1px",
-            borderRadius: "4px",
-            borderStyle: "solid",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
+        {fieldErrors.name && <p style={errorStyle}>{fieldErrors.name}</p>}
+
         <input
           type="text"
           name="email"
           value={data.email}
           onChange={handleChange}
           placeholder="Email"
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginBottom: "16px",
-            color: "#fff",
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
-            borderColor: "#fff",
-            borderWidth: "1px",
-            borderRadius: "4px",
-            borderStyle: "solid",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
+        {fieldErrors.email && <p style={errorStyle}>{fieldErrors.email}</p>}
+
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          style={{
-            width: "100%",
-            padding: "8px",
-            marginTop: "16px",
-            color: "#fff",
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
-            borderColor: "#fff",
-            borderWidth: "1px",
-            borderRadius: "4px",
-            borderStyle: "solid",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
+        {fileError && <p style={errorStyle}>{fileError}</p>}
+
         {data.imagePreview && (
           <img
             src={data.imagePreview}
@@ -183,28 +199,14 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
 
       <DialogActions sx={{ color: "#fff" }}>
         <Button
-          autoFocus
           onClick={handleClose}
-          sx={{
-            backgroundColor: "rgba(255, 0, 0, 0.8)",
-            color: "white",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            "&:hover": { backgroundColor: "rgba(139, 0, 0, 0.8)" },
-          }}
+          sx={cancelButtonStyle}
         >
           Cancel
         </Button>
         <Button
           onClick={handleOk}
-          autoFocus
-          sx={{
-            backgroundColor: "rgba(0, 0, 255, 0.8)",
-            color: "white",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            "&:hover": { backgroundColor: "rgba(0, 0, 139, 0.8)" },
-          }}
+          sx={okButtonStyle}
         >
           Ok
         </Button>
@@ -212,3 +214,38 @@ export default function Modal({ edituser, setEditUser, editeduser }) {
     </Dialog>
   );
 }
+
+// 🔧 Styles
+const inputStyle = {
+  width: "100%",
+  padding: "8px",
+  marginBottom: "10px",
+  color: "#fff",
+  backgroundColor: "rgba(255, 255, 255, 0.15)",
+  border: "1px solid #fff",
+  borderRadius: "4px",
+  outline: "none",
+};
+
+const errorStyle = {
+  color: "black",
+  marginTop: "-10px",
+  marginBottom: "10px",
+  fontSize: "0.9rem",
+};
+
+const cancelButtonStyle = {
+  backgroundColor: "rgba(255, 0, 0, 0.8)",
+  color: "white",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  "&:hover": { backgroundColor: "rgba(139, 0, 0, 0.8)" },
+};
+
+const okButtonStyle = {
+  backgroundColor: "rgba(0, 0, 255, 0.8)",
+  color: "white",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  "&:hover": { backgroundColor: "rgba(0, 0, 139, 0.8)" },
+};
