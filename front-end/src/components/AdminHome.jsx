@@ -152,12 +152,8 @@ const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
 const usersPerPage = 5;
-const filteredUsers = users.filter((user) => {
-  return (
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-});
+
+const filteredUsers = users;
 
 const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 const startIndex = (currentPage - 1) * usersPerPage;
@@ -175,23 +171,29 @@ const currentUsers = filteredUsers.slice(startIndex, endIndex);
   const addUserTolist = (newUser) => {
     setUsers((prevuser) => [...prevuser, newUser]);
   };
+const fetchUsers = async (search = "") => {
+  try {
+    const url = search.trim() === "" ? "/admin/users" : `/admin/users?search=${encodeURIComponent(search)}`;
+    const response = await axiosInstance.get(url);
 
-  useEffect(() => {
-    const fetchdatas = async () => {
-      try {
-        const response = await axiosInstance.get("/admin/users");
-        
-        if (response.data && Array.isArray(response.data.users)) {
-          setUsers(response.data.users);
-        } else {
-          toast.error("Unexpected response format:", response.data);
-        }
-      } catch (error) {
-        toast.error("Error fetching data:", error.response?.data || error.message);
-      }
-    };
-    fetchdatas();
-  }, []);
+    if (response.data && Array.isArray(response.data.users)) {
+      setUsers(response.data.users);
+      setCurrentPage(1);  // reset pagination on new fetch
+    } else {
+      toast.error("Unexpected response format");
+    }
+  } catch (error) {
+    toast.error("Error fetching data: " + (error.response?.data || error.message));
+  }
+};
+
+useEffect(() => {
+  fetchUsers();
+}, []);
+
+useEffect(() => {
+  fetchUsers(searchTerm);
+}, [searchTerm]);
 
  
 
