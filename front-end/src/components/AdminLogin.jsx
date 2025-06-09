@@ -54,7 +54,7 @@ const AdminLogin = () => {
     }
   };
 
-  // Inline styles as objects
+  
   const styles = {
     container: {
       display: "flex",
@@ -64,7 +64,7 @@ const AdminLogin = () => {
       background: " linear-gradient(135deg, #ffdde1 0%, #ee9ca7 50%, #ff7e5f 100%)",
     },
     formWrapper: {
-      background: "linear-gradient(180deg,rgb(235, 131, 4) 0%,rgb(204, 0, 146) 100%)", // gray-900
+      background: "linear-gradient(180deg,rgb(235, 131, 4) 0%,rgb(204, 0, 146) 100%)", 
       padding: "2rem",
       borderRadius: "0.5rem",
       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
@@ -126,8 +126,7 @@ const AdminLogin = () => {
     },
   };
 
-  // For the button hover effect, React inline styles can't handle :hover,
-  // so we use onMouseEnter/onMouseLeave events to toggle style:
+
   const [btnHover, setBtnHover] = useState(false);
 
   return (

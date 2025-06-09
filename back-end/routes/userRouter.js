@@ -16,6 +16,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/signup', registerUser);
 router.post('/login', loginUser);
 router.get('/authenticated', authenticateJWT('user'), isAuthenticated);
+
 router.put('/edit-profile',authenticateJWT('user'),upload.single('profileImage'), updateUserProfile);
 router.post('/imageupload', authenticateJWT('user'), upload.single('profileImage'), uploadProfileImage);
 

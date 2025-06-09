@@ -214,6 +214,7 @@ const handleConfirmDelete = async () => {
     toast.success("User deleted successfully");
   } catch (err) {
     toast.error("Error deleting user");
+    
   }
   setDeleteId(null);
 };
