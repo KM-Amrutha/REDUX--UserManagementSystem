@@ -99,6 +99,8 @@ export const  isAuthenticated = async (req, res) => {
 export const uploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
+        return res.status(400).json({ message: "No image file uploaded" });
+    }
       const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 if (!allowedTypes.includes(req.file.mimetype)) {
   return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
@@ -108,7 +110,7 @@ const MAX_SIZE = 2 * 1024 * 1024;
 if (req.file.size > MAX_SIZE) {
   return res.status(400).json({ message: "File size exceeds 2MB limit." });
 }
-    }
+    
     const imageUrl = await uploadImage(req.file.buffer);
     const { userId } = req.body;
     if (!imageUrl) {

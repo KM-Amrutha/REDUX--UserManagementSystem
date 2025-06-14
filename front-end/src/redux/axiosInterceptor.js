@@ -11,19 +11,17 @@ export const axiosInstance = axios.create({
 });
 
 
-axiosInstance.interceptors.request.use(
-  (config) => {
+axiosInstance.interceptors.request.use((config) => {
+
+  if (!config.headers['Authorization']) {
     const token = Cookies.get('authToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    return config;
-  },
-  (error) => {
-    console.error('User Request Error:', error);
-    return Promise.reject(error);
   }
-);
+  return config;
+});
+
 
 
 
