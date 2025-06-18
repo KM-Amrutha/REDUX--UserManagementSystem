@@ -9,7 +9,6 @@ import {toast} from 'react-hot-toast'
 import {logout} from '../redux/AuthSlice'
 import { useDispatch } from "react-redux";
 
-
 const styles = {
   adminPanel: {
   display: "flex",
@@ -151,8 +150,6 @@ const AdminHome = () => {
 const [confirmOpen, setConfirmOpen] = useState(false);
 const dispatch = useDispatch()
 
-  // const navigate = useNavigate();
-
   const [currentPage, setCurrentPage] = useState(1);
 const usersPerPage = 5;
 
@@ -250,7 +247,7 @@ const handleConfirmDelete = async () => {
    
     Cookies.remove("authToken");
     dispatch(logout());
-      localStorage.clear(); // just in case anything is persisted
+      localStorage.clear();
   sessionStorage.clear();
      window.location.replace("/admin-login");
   };

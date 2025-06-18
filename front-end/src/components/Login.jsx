@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../redux/AuthSlice';
 import { axiosInstance } from '../redux/axiosInterceptor';
 import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 function Login() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -28,12 +28,12 @@ const handleSubmit = async (e) => {
     const response = await axiosInstance.post('/user/login', formData); 
     const { token, user } = response.data;
 
-    Cookies.remove('authToken'); // ✅ Clear any existing session token
-    Cookies.set('authToken', token); // ✅ Set new token
+    Cookies.remove('authToken'); 
+    Cookies.set('authToken', token);
 
     dispatch(setUser(user)); 
 
-    window.location.replace('/home'); // ✅ Replace to prevent history back navigation
+    window.location.replace('/home');
   } catch (err) {
     setError(err.response?.data?.message || 'Login failed');
   }

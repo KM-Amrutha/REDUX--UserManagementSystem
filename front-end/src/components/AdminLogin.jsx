@@ -48,9 +48,9 @@ const loginSubmit = async (e) => {
 
     if (response.status === 200 && response.data.token) {
       console.log('🧠 Dispatching logout...');
-     dispatch(logout()); // Clear Redux user state
+     dispatch(logout());
      console.log('auth token remove aakii')
-Cookies.remove("authToken"); // Remove old user token
+Cookies.remove("authToken"); 
 console.log('token set cheythuuu')
 Cookies.set("authToken", response.data.token, { expires: 30 }); 
 console.log('home vare ethiii')
@@ -92,7 +92,7 @@ console.log('home vare ethiii')
       textAlign: "center",
     },
     subtitle: {
-      color: "#a0aec0", // gray-400
+      color: "#a0aec0", 
       marginBottom: "1.5rem",
       textAlign: "center",
     },
@@ -100,15 +100,15 @@ console.log('home vare ethiii')
       display: "block",
       fontSize: "0.875rem",
       fontWeight: "500",
-      color: "#cbd5e0", // gray-300
+      color: "#cbd5e0", 
       marginBottom: "0.25rem",
     },
     input: {
       width: "100%",
       padding: "0.5rem",
-      border: "1px solid #4a5568", // gray-700
+      border: "1px solid #4a5568", 
       borderRadius: "0.5rem",
-      backgroundColor: "#fff", // gray-800
+      backgroundColor: "#fff", 
       color: "#000",
       outline: "none",
       marginBottom: "0.25rem",
@@ -116,16 +116,16 @@ console.log('home vare ethiii')
       boxSizing: "border-box",
     },
     inputFocus: {
-      borderColor: "#4299e1", // blue-500
+      borderColor: "#4299e1", 
     },
     errorText: {
-      color: "#000", // red-500
+      color: "#000", 
       fontSize: "1rem",
       marginBottom: "0.75rem",
     },
     button: {
       width: "100%",
-      backgroundColor: "#3182ce", // blue-600
+      backgroundColor: "#3182ce",
       color: "#fff",
       padding: "0.5rem",
       borderRadius: "0.375rem",
@@ -136,7 +136,7 @@ console.log('home vare ethiii')
       transition: "background-color 0.2s ease",
     },
     buttonHover: {
-      backgroundColor: "#2b6cb0", // blue-700
+      backgroundColor: "#2b6cb0", 
     },
   };
 

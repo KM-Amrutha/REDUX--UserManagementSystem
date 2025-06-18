@@ -28,7 +28,6 @@ useEffect(() => {
 
   if (user) {
     if (user.role !== "user") {
-      // ❌ If it's admin or anything else
       Cookies.remove("authToken");
       dispatch(logout());
       window.location.replace("/login");
@@ -44,8 +43,6 @@ useEffect(() => {
 
   const handleLogout = () => {
     Cookies.remove("authToken");
-      localStorage.clear(); // just in case anything is persisted
-  sessionStorage.clear();
      dispatch(logout()); 
       window.location.replace("/login")
   };

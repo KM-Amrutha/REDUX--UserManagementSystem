@@ -15,12 +15,12 @@ export const adminLogin = async (req, res) => {
     if (admin && await bcrypt.compare(password, admin.password)) {
       const token = generateToken(admin._id, 'admin');
 
-      // Set cookie to replace any previous user/admin token
+      
       res.cookie("authToken", token, {
         httpOnly: true,
-        secure: true, // set to false in local/dev
+        secure: true, 
         sameSite: "strict",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        maxAge: 30 * 24 * 60 * 60 * 1000, 
       });
 
       res.json({
@@ -49,7 +49,7 @@ export const isAuthenticated = async (req, res) => {
   return res.status(200).json({
   status: true,
   message: 'Authenticated',
-  role: req.user.role, // ✅ Add role
+  role: req.user.role,
   data: adminData,
 });
 
@@ -94,7 +94,7 @@ export const addUser = async (req, res) => {
 
     if (!req.file) return res.status(400).json({ message: 'Image is required' });
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_SIZE = 2 * 1024 * 1024; 
 
 if (!allowedTypes.includes(req.file.mimetype)) {
   return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
@@ -134,7 +134,7 @@ export const editUser = async (req, res) => {
 
     if (req.file) {
       const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_SIZE = 2 * 1024 * 1024; 
 
 if (!allowedTypes.includes(req.file.mimetype)) {
   return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });
@@ -165,7 +165,7 @@ export const imageUpload = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
 const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_SIZE = 2 * 1024 * 1024;
 
 if (!allowedTypes.includes(req.file.mimetype)) {
   return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and WEBP are allowed." });

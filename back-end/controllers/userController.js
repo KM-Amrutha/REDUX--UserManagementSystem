@@ -59,10 +59,9 @@ export const loginUser = async (req, res) => {
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = generateToken(user._id, "user");
 
-      // Set cookie: replaces any admin token if exists
       res.cookie("authToken", token, {
         httpOnly: true,
-        secure: true, // set to false on localhost if needed
+        secure: true, 
         sameSite: "strict",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -103,7 +102,7 @@ export const  isAuthenticated = async (req, res) => {
     status: true, 
     message: 'User authenticated', 
     userData, 
-    role: req.user.role  // ✅ Add role from token
+    role: req.user.role 
   });
 
   } catch (error) {
@@ -151,7 +150,7 @@ if (req.file.size > MAX_SIZE) {
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const userId = req.userId; // comes from authenticateJWT
+    const userId = req.userId; 
     const { name, email } = req.body;
 
     let profileImage;

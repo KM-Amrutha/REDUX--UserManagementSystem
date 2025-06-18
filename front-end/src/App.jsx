@@ -18,11 +18,9 @@ import { setUser } from './redux/AuthSlice';
 
 
 
-
 function ProtectedRoute({ ifLogged, notLogged }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const dispatch = useDispatch();
-  
 
   useEffect(() => {
     const token = Cookies.get('authToken');
@@ -40,16 +38,11 @@ function ProtectedRoute({ ifLogged, notLogged }) {
           dispatch(setUser(data.userData));
           setIsAuthenticated(true);
         } else {
-          Cookies.remove('authToken');
-          dispatch(logout());
           setIsAuthenticated(false);
-          // window.location.replace('/login'); // force stop
         }
       } catch (error) {
-        Cookies.remove('authToken');
-        dispatch(logout());
         setIsAuthenticated(false);
-        // window.location.replace('/login');
+        console.log(error.message)
       }
     };
 
@@ -80,12 +73,9 @@ function AdminProtectedRoute({ ifAdminLogged, notAdminLogged }) {
     const checkAdminAuthentication = async () => {
       try {
         const { data } = await axiosInstance.get('/admin/authenticated');
-
-        // ✅ If role is admin, allow access
         if (data.role === 'admin') {
           setIsAdminAuthenticated(true);
         } else {
-          // ❌ If role is NOT admin, remove token & redirect
           Cookies.remove('authToken');
               dispatch(logout());
           setIsAdminAuthenticated(false);
