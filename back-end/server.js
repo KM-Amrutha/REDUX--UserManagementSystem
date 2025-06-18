@@ -29,6 +29,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger('dev'));
 
+
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 app.use('/user', userRouter);
 app.use('/admin', adminRouter);
 

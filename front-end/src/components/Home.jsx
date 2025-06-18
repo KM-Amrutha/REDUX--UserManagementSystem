@@ -1,18 +1,53 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import EditProfileModal from "./EditProfileModal";
+import { useDispatch } from "react-redux";
+import {logout} from '../redux/AuthSlice'
 
 const Home = () => {
+  
   const user = useSelector((state) => state.auth.user);
-  const navigate = useNavigate();
+
+  
+  // const navigate = useNavigate();
   const [showEdit, setShowEdit] = useState(false);
   const [updatedUser, setUpdatedUser] = useState(user);
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch()
+
+useEffect(() => {
+  const token = Cookies.get("authToken");
+
+  if (!token) {
+    dispatch(logout());
+    window.location.replace("/login");
+    return;
+  }
+
+  if (user) {
+    if (user.role !== "user") {
+      // ❌ If it's admin or anything else
+      Cookies.remove("authToken");
+      dispatch(logout());
+      window.location.replace("/login");
+    } else {
+      setUpdatedUser(user);
+      setLoading(false);
+    }
+  }
+}, [user, dispatch]);
+
+
+
 
   const handleLogout = () => {
     Cookies.remove("authToken");
-    navigate("/login");
+      localStorage.clear(); // just in case anything is persisted
+  sessionStorage.clear();
+     dispatch(logout()); 
+      window.location.replace("/login")
   };
 
   const styles = {
@@ -52,6 +87,8 @@ const Home = () => {
       transition: "background-color 0.2s ease",
     },
   };
+
+    if (loading) return <div>Loading...</div>;
 
   return (
     <div style={styles.container}>

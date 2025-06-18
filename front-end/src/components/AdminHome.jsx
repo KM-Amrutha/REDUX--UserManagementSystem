@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../redux/axiosInterceptor";
 import Cookies from "js-cookie";
 import ModalAddUser from "./AddUser";
 import Modal from "./Modal";
 import {toast} from 'react-hot-toast'
+import {logout} from '../redux/AuthSlice'
+import { useDispatch } from "react-redux";
 
 
 const styles = {
@@ -147,8 +149,9 @@ const AdminHome = () => {
   const [adduser, setadduser] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 const [confirmOpen, setConfirmOpen] = useState(false);
+const dispatch = useDispatch()
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
 const usersPerPage = 5;
@@ -159,6 +162,27 @@ const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 const startIndex = (currentPage - 1) * usersPerPage;
 const endIndex = startIndex + usersPerPage;
 const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+useEffect(() => {
+  const checkAdminAuth = async () => {
+    try {
+      const res = await axiosInstance.get("/admin/authenticated");
+      if (res.data?.role !== "admin") {
+        Cookies.remove("authToken");
+        dispatch(logout());
+        window.location.replace("/admin-login");
+      }
+    } catch (error) {
+      Cookies.remove("authToken");
+      dispatch(logout());
+      window.location.replace("/admin-login");
+      console.log(error.mesage)
+    }
+  };
+
+  checkAdminAuth();
+}, []);
+
 
 
   const getEditedDatas = (editedDatas, id) => {
@@ -214,6 +238,7 @@ const handleConfirmDelete = async () => {
     toast.success("User deleted successfully");
   } catch (err) {
     toast.error("Error deleting user");
+    console.log(err.mesage)
     
   }
   setDeleteId(null);
@@ -222,8 +247,12 @@ const handleConfirmDelete = async () => {
 
 
   const handleLogout = () => {
-    navigate("/admin-login");
+   
     Cookies.remove("authToken");
+    dispatch(logout());
+      localStorage.clear(); // just in case anything is persisted
+  sessionStorage.clear();
+     window.location.replace("/admin-login");
   };
 
   const handleadduser = () => {

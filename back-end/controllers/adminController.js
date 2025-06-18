@@ -10,14 +10,24 @@ const generateToken = (id, role = 'admin') => {
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
-    
     const admin = await User.findOne({ email, role: 'admin' });
+
     if (admin && await bcrypt.compare(password, admin.password)) {
+      const token = generateToken(admin._id, 'admin');
+
+      // Set cookie to replace any previous user/admin token
+      res.cookie("authToken", token, {
+        httpOnly: true,
+        secure: true, // set to false in local/dev
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      });
+
       res.json({
         _id: admin._id,
         name: admin.name,
         email: admin.email,
-        token: generateToken(admin._id, 'admin'),
+        token,
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials or not an admin' });
@@ -27,6 +37,7 @@ export const adminLogin = async (req, res) => {
   }
 };
 
+
 export const isAuthenticated = async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'admin') {
@@ -35,11 +46,13 @@ export const isAuthenticated = async (req, res) => {
 
     const adminData = await User.findById(req.user._id).select('-password');
 
-    return res.status(200).json({
-      status: true,
-      message: 'Authenticated',
-      data: adminData,
-    });
+  return res.status(200).json({
+  status: true,
+  message: 'Authenticated',
+  role: req.user.role, // ✅ Add role
+  data: adminData,
+});
+
   } catch (error) {
     console.error('Authentication Error:', error);
     return res.status(500).json({ status: false, message: 'Server error', error });

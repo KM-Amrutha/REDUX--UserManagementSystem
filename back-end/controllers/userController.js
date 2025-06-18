@@ -57,14 +57,24 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      const token = generateToken(user._id, "user");
+
+      // Set cookie: replaces any admin token if exists
+      res.cookie("authToken", token, {
+        httpOnly: true,
+        secure: true, // set to false on localhost if needed
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
+
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id,'user'),
+        token,
       });
     } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+      res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -88,8 +98,14 @@ export const  isAuthenticated = async (req, res) => {
     }
 
     return res
-      .status(200)
-      .json({ status: true, message: 'User authenticated', userData });
+  .status(200)
+  .json({ 
+    status: true, 
+    message: 'User authenticated', 
+    userData, 
+    role: req.user.role  // ✅ Add role from token
+  });
+
   } catch (error) {
     console.error('Authentication Check Error:', error);
     return res.status(500).json({ message: 'Server error', error });

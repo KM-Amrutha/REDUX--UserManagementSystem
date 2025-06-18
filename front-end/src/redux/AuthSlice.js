@@ -12,8 +12,9 @@ const authSlice = createSlice({
       state.user = action.payload;
     },
     logout: (state) => {
+        console.log('🔥 LOGOUT REDUCER TRIGGERED');
       state.user = null;
-      localStorage.removeItem('token');
+       
     },
   },
 });

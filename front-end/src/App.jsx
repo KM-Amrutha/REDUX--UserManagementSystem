@@ -2,6 +2,7 @@
 import { useState, useEffect, memo } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
@@ -9,72 +10,109 @@ import AdminLogin from './components/AdminLogin';
 import AdminHome from './components/AdminHome';
 import AddUser from './components/AddUser';
 import {Toaster} from 'react-hot-toast'
-
+import {logout} from './redux/AuthSlice'
 import { useDispatch } from 'react-redux';
 import Cookies from 'js-cookie';
 import { axiosInstance } from './redux/axiosInterceptor';
 import { setUser } from './redux/AuthSlice';
 
+
+
+
 function ProtectedRoute({ ifLogged, notLogged }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const token = Cookies.get('authToken');
   const dispatch = useDispatch();
+  
 
   useEffect(() => {
+    const token = Cookies.get('authToken');
+    if (!token) {
+      dispatch(logout());
+      setIsAuthenticated(false);
+      return;
+    }
+
     const checkAuthentication = async () => {
-      if (token) {
-        try {
-          const { data } = await axiosInstance.get('/user/authenticated');
-          if (data.userData) {
-            dispatch(setUser(data.userData));
-            setIsAuthenticated(data.status);
-          } else {
-            setIsAuthenticated(false);
-            Cookies.remove('authToken');
-          }
-        } catch (error) {
-          console.log(error.message);
+      try {
+        const { data } = await axiosInstance.get('/user/authenticated');
+
+        if (data.role === 'user') {
+          dispatch(setUser(data.userData));
+          setIsAuthenticated(true);
+        } else {
+          Cookies.remove('authToken');
+          dispatch(logout());
           setIsAuthenticated(false);
+          // window.location.replace('/login'); // force stop
         }
-      } else {
+      } catch (error) {
+        Cookies.remove('authToken');
+        dispatch(logout());
         setIsAuthenticated(false);
+        // window.location.replace('/login');
       }
     };
 
     checkAuthentication();
-  }, [token, dispatch]);
+  }, [dispatch]);
 
   if (isAuthenticated === null) return <div>Loading...</div>;
-
   return isAuthenticated ? ifLogged : notLogged;
 }
 
+
+
+
+
+
 function AdminProtectedRoute({ ifAdminLogged, notAdminLogged }) {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(null);
-  const token = Cookies.get('authToken');
 
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
   useEffect(() => {
+    const token = Cookies.get('authToken');
+    if (!token) {
+      setIsAdminAuthenticated(false);
+      return;
+    }
+
     const checkAdminAuthentication = async () => {
-      if (token) {
-        try {
-          const { data } = await axiosInstance.get('/admin/authenticated');
-          setIsAdminAuthenticated(data.status);
-        } catch (error) {
-          console.log(error.message);
+      try {
+        const { data } = await axiosInstance.get('/admin/authenticated');
+
+        // ✅ If role is admin, allow access
+        if (data.role === 'admin') {
+          setIsAdminAuthenticated(true);
+        } else {
+          // ❌ If role is NOT admin, remove token & redirect
+          Cookies.remove('authToken');
+              dispatch(logout());
           setIsAdminAuthenticated(false);
+          navigate("/admin-login", { replace: true })
+          
+         
         }
-      } else {
+
+      } catch (error) {
+        console.error('Admin auth failed:', error.message);
+        Cookies.remove('authToken');
+        dispatch(logout());
         setIsAdminAuthenticated(false);
+         navigate("/admin-login", { replace: true })
       }
     };
 
     checkAdminAuthentication();
-  }, [token]);
+  }, [dispatch, navigate]);
 
   if (isAdminAuthenticated === null) return <div>Loading...</div>;
-
   return isAdminAuthenticated ? ifAdminLogged : notAdminLogged;
 }
+
+
+
+
 
 function App() {
   return (

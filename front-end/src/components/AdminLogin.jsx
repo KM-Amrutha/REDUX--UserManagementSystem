@@ -3,6 +3,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../redux/axiosInterceptor";
 import Cookies from "js-cookie";
+import {logout} from '../redux/AuthSlice'
+import { useDispatch } from "react-redux";
+
+
 
 const AdminLogin = () => {
   const [loginData, setLoginData] = useState({
@@ -15,6 +19,7 @@ const AdminLogin = () => {
     general: "",
   });
   const navigate = useNavigate();
+  const dispatch= useDispatch()
 
   const onChangeData = (key, value) => {
     setLoginData((prev) => ({ ...prev, [key]: value }));
@@ -34,25 +39,34 @@ const AdminLogin = () => {
     return isValid;
   };
 
-  const loginSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+const loginSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    try {
-      const response = await axiosInstance.post("/admin/login", loginData);
+  try {
+    const response = await axiosInstance.post("/admin/login", loginData);
 
-      if (response.status === 200 && response.data.token) {
-        Cookies.set("authToken", response.data.token,{expires:30});
-        navigate("/admin-home");
-      } else {
-        setError({ general: "Login failed. Please check your credentials." });
-      }
-    } catch (error) {
-      setError({
-        general: error.response?.data?.message || "Something went wrong. Please try again.",
-      });
+    if (response.status === 200 && response.data.token) {
+      console.log('🧠 Dispatching logout...');
+     dispatch(logout()); // Clear Redux user state
+     console.log('auth token remove aakii')
+Cookies.remove("authToken"); // Remove old user token
+console.log('token set cheythuuu')
+Cookies.set("authToken", response.data.token, { expires: 30 }); 
+console.log('home vare ethiii')
+  navigate("/admin-home", { replace: true });
+
+
+    } else {
+      setError({ general: "Login failed. Please check your credentials." });
     }
-  };
+  } catch (error) {
+    setError({
+      general: error.response?.data?.message || "Something went wrong. Please try again.",
+    });
+  }
+};
+
 
   
   const styles = {

@@ -21,20 +21,24 @@ function Login() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const response = await axiosInstance.post('/user/login', formData); 
-      const { token, user } = response.data;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  try {
+    const response = await axiosInstance.post('/user/login', formData); 
+    const { token, user } = response.data;
 
-      Cookies.set('authToken', token);
-      dispatch(setUser(user)); 
-      navigate('/home');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    }
-  };
+    Cookies.remove('authToken'); // ✅ Clear any existing session token
+    Cookies.set('authToken', token); // ✅ Set new token
+
+    dispatch(setUser(user)); 
+
+    window.location.replace('/home'); // ✅ Replace to prevent history back navigation
+  } catch (err) {
+    setError(err.response?.data?.message || 'Login failed');
+  }
+};
+
 
   return (
     <div className="login-container">
